@@ -45,36 +45,30 @@ defmodule BankingApi.Operations do
     Multi.new()
     |> Multi.run(
       :get_accounts_step,
-      get_accounts(input.source_user_email, input.target_user_email)
+      get_accounts(input)
     )
-    |> Multi.run(:verify_balances_step, verify_balances(input.amount))
     |> Multi.run(:subtract_from_source_account_step, &subtract_from_source_account/2)
     |> Multi.run(:add_to_target_account_step, &add_to_target_account/2)
     |> Repo.transaction()
     |> case do
-      {:ok, %{get_accounts_step: {source_account, target_account}}} ->
+      {:ok, %{get_accounts_step: {source_account, target_account, _amount}}} ->
         {:ok, {source_account, target_account}}
 
-      {:error, _step, reason, _changes} ->
-        {:error, reason}
+      {:error, step, reason, _changes} ->
+        case step do
+          :subtract_from_source_account_step -> {:error, :insufficient_funds}
+          _ -> {:error, reason}
+        end
     end
   end
 
-  defp verify_balances(amount) do
-    fn _repo, %{get_accounts_step: {source_account, target_account}} ->
-      if source_account.balance < amount,
-        do: {:error, :insufficient_funds},
-        else: {:ok, {source_account, target_account, amount}}
-    end
-  end
-
-  defp get_accounts(source_user_email, target_user_email) do
+  defp get_accounts(input) do
     fn repo, _ ->
       with {:source_account, %{account: source_account}} <-
-             {:source_account, get_account_by_email(repo, source_user_email)},
+             {:source_account, get_account_by_email(repo, input.source_user_email)},
            {:target_account, %{account: target_account}} <-
-             {:target_account, get_account_by_email(repo, target_user_email)} do
-        {:ok, {source_account, target_account}}
+             {:target_account, get_account_by_email(repo, input.target_user_email)} do
+        {:ok, {source_account, target_account, input.amount}}
       else
         {:source_account, nil} -> {:error, :source_account_not_found}
         {:target_account, nil} -> {:error, :target_account_not_found}
@@ -86,11 +80,11 @@ defmodule BankingApi.Operations do
     User |> lock("FOR UPDATE") |> repo.get_by(email: email) |> repo.preload([:account])
   end
 
-  defp subtract_from_source_account(repo, %{verify_balances_step: {source_account, _, amount}}) do
+  defp subtract_from_source_account(repo, %{get_accounts_step: {source_account, _, amount}}) do
     update_account_balance(repo, source_account, source_account.balance - amount)
   end
 
-  defp add_to_target_account(repo, %{verify_balances_step: {_, target_account, amount}}) do
+  defp add_to_target_account(repo, %{get_accounts_step: {_, target_account, amount}}) do
     update_account_balance(repo, target_account, target_account.balance + amount)
   end
 
