@@ -8,8 +8,8 @@ defmodule BankingApiWeb.OperationControllerTest do
   describe "POST /api/operations/transaction" do
     test "fails with 404 when one of users does not exist", ctx do
       input = %{
-        email_sender: "not_exist@email.com",
-        email_receiver: "not_exist_too@email.com",
+        source_user_email: "not_exist@email.com",
+        target_user_email: "not_exist_too@email.com",
         amount: 1
       }
 
@@ -23,19 +23,19 @@ defmodule BankingApiWeb.OperationControllerTest do
     end
 
     test "fails with 400 when amount is negative", ctx do
-      user_sender =
+      source_user =
         Repo.insert!(%User{email: "#{Ecto.UUID.generate()}@email.com", name: "Some name"})
 
-      Repo.insert!(%Account{balance: 0, user_id: user_sender.id})
+      Repo.insert!(%Account{balance: 0, user_id: source_user.id})
 
-      user_receiver =
+      target_user =
         Repo.insert!(%User{email: "#{Ecto.UUID.generate()}@email.com", name: "Some name"})
 
-      Repo.insert!(%Account{balance: 100, user_id: user_receiver.id})
+      Repo.insert!(%Account{balance: 100, user_id: target_user.id})
 
       input = %{
-        email_sender: user_sender.email,
-        email_receiver: user_receiver.email,
+        source_user_email: source_user.email,
+        target_user_email: target_user.email,
         amount: -100
       }
 
@@ -48,22 +48,26 @@ defmodule BankingApiWeb.OperationControllerTest do
                |> post("/api/operations/transaction", input)
                |> json_response(:bad_request)
 
-      assert %{balance: 0} = Repo.get_by(Account, user_id: user_sender.id)
-      assert %{balance: 100} = Repo.get_by(Account, user_id: user_receiver.id)
+      assert %{balance: 0} = Repo.get_by(Account, user_id: source_user.id)
+      assert %{balance: 100} = Repo.get_by(Account, user_id: target_user.id)
     end
 
     test "fails with 400 when user's account does not have sufficient funds", ctx do
-      user_sender =
+      source_user =
         Repo.insert!(%User{email: "#{Ecto.UUID.generate()}@email.com", name: "Some name"})
 
-      Repo.insert!(%Account{balance: 0, user_id: user_sender.id})
+      Repo.insert!(%Account{balance: 0, user_id: source_user.id})
 
-      user_receiver =
+      target_user =
         Repo.insert!(%User{email: "#{Ecto.UUID.generate()}@email.com", name: "Some name"})
 
-      Repo.insert!(%Account{balance: 100, user_id: user_receiver.id})
+      Repo.insert!(%Account{balance: 100, user_id: target_user.id})
 
-      input = %{email_sender: user_sender.email, email_receiver: user_receiver.email, amount: 500}
+      input = %{
+        source_user_email: source_user.email,
+        target_user_email: target_user.email,
+        amount: 500
+      }
 
       assert %{
                "description" => "Sender's account does not have enough money available",
@@ -73,22 +77,26 @@ defmodule BankingApiWeb.OperationControllerTest do
                |> post("/api/operations/transaction", input)
                |> json_response(:bad_request)
 
-      assert %{balance: 0} = Repo.get_by(Account, user_id: user_sender.id)
-      assert %{balance: 100} = Repo.get_by(Account, user_id: user_receiver.id)
+      assert %{balance: 0} = Repo.get_by(Account, user_id: source_user.id)
+      assert %{balance: 100} = Repo.get_by(Account, user_id: target_user.id)
     end
 
     test "successfully create a new transaction", ctx do
-      user_sender =
+      source_user =
         Repo.insert!(%User{email: "#{Ecto.UUID.generate()}@email.com", name: "Some name"})
 
-      Repo.insert!(%Account{balance: 1000, user_id: user_sender.id})
+      Repo.insert!(%Account{balance: 1000, user_id: source_user.id})
 
-      user_receiver =
+      target_user =
         Repo.insert!(%User{email: "#{Ecto.UUID.generate()}@email.com", name: "Some name"})
 
-      Repo.insert!(%Account{balance: 100, user_id: user_receiver.id})
+      Repo.insert!(%Account{balance: 100, user_id: target_user.id})
 
-      input = %{email_sender: user_sender.email, email_receiver: user_receiver.email, amount: 500}
+      input = %{
+        source_user_email: source_user.email,
+        target_user_email: target_user.email,
+        amount: 500
+      }
 
       assert %{"status" => status} =
                ctx.conn
@@ -97,8 +105,8 @@ defmodule BankingApiWeb.OperationControllerTest do
 
       assert status == "success"
 
-      assert %{balance: 500} = Repo.get_by(Account, user_id: user_sender.id)
-      assert %{balance: 600} = Repo.get_by(Account, user_id: user_receiver.id)
+      assert %{balance: 500} = Repo.get_by(Account, user_id: source_user.id)
+      assert %{balance: 600} = Repo.get_by(Account, user_id: target_user.id)
     end
   end
 end

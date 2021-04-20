@@ -51,13 +51,13 @@ defmodule BankingApiWeb.OperationController do
           description: "Sender's account does not have enough money available"
         })
 
-      {:error, :account_sender_not_found} ->
+      {:error, :source_account_not_found} ->
         Helpers.send_json(conn, :not_found, %{
           type: "not_found",
           description: "Sender's account does not exist"
         })
 
-      {:error, :account_receiver_not_found} ->
+      {:error, :target_account_not_found} ->
         Helpers.send_json(conn, :not_found, %{
           type: "not_found",
           description: "Receiver's account does not exist"

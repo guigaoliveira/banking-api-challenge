@@ -3,13 +3,13 @@ defmodule BankingApi.Operations.Inputs.CreateTransaction do
 
   import Ecto.Changeset
 
-  @required_fields [:email_sender, :email_receiver, :amount]
+  @required_fields [:source_user_email, :target_user_email, :amount]
   @optional_fields []
 
   @primary_key false
   embedded_schema do
-    field :email_sender, :string
-    field :email_receiver, :string
+    field :source_user_email, :string
+    field :target_user_email, :string
     field :amount, :integer
   end
 
