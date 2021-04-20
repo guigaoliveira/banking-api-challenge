@@ -43,10 +43,7 @@ defmodule BankingApi.Operations do
     Logger.info("Starting transaction operation")
 
     Multi.new()
-    |> Multi.run(
-      :get_accounts_step,
-      get_accounts(input)
-    )
+    |> Multi.run(:get_accounts_step, get_accounts(input))
     |> Multi.run(:subtract_from_source_account_step, &subtract_from_source_account/2)
     |> Multi.run(:add_to_target_account_step, &add_to_target_account/2)
     |> Repo.transaction()
