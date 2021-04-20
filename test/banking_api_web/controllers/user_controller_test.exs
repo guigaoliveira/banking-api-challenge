@@ -34,7 +34,6 @@ defmodule BankingApiWeb.UserControllerTest do
              }
     end
 
-    @tag capture_log: true
     test "fail with 400 when email is already taken", ctx do
       email = "#{Ecto.UUID.generate()}@email.com"
 
@@ -52,6 +51,32 @@ defmodule BankingApiWeb.UserControllerTest do
                "type" => "bad_input",
                "details" => %{"email" => "has already been taken"}
              }
+    end
+
+    test "successfully create a new user", ctx do
+      user_email = "#{Ecto.UUID.generate()}@email.com"
+
+      input = %{
+        email: user_email,
+        name: "Some name"
+      }
+
+      assert %{
+               "email" => email,
+               "name" => name,
+               "id" => id,
+               "inserted_at" => inserted_at,
+               "updated_at" => updated_at
+             } =
+               ctx.conn
+               |> post("/api/users", input)
+               |> json_response(:ok)
+
+      assert name == input.name
+      assert email == input.email
+      assert is_binary(id)
+      assert is_binary(inserted_at)
+      assert is_binary(updated_at)
     end
   end
 
@@ -81,13 +106,14 @@ defmodule BankingApiWeb.UserControllerTest do
                "email" => email,
                "id" => id,
                "inserted_at" => inserted_at,
-               "name" => "Some name",
+               "name" => name,
                "updated_at" => updated_at
              } =
                ctx.conn
                |> get("/api/users/#{user.id}")
                |> json_response(:ok)
 
+      assert name == user.name
       assert email == user.email
       assert id == user.id
       assert inserted_at == NaiveDateTime.to_iso8601(user.inserted_at)

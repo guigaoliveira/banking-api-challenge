@@ -18,7 +18,7 @@ defmodule BankingApiWeb.OperationControllerTest do
                "type" => "not_found"
              } =
                ctx.conn
-               |> post("/api/operations/transaction", input)
+               |> post("/api/operations/transactions", input)
                |> json_response(:not_found)
     end
 
@@ -45,7 +45,7 @@ defmodule BankingApiWeb.OperationControllerTest do
                "details" => %{"amount" => "must be greater than or equal to 0"}
              } =
                ctx.conn
-               |> post("/api/operations/transaction", input)
+               |> post("/api/operations/transactions", input)
                |> json_response(:bad_request)
 
       assert %{balance: 0} = Repo.get_by(Account, user_id: source_user.id)
@@ -74,7 +74,7 @@ defmodule BankingApiWeb.OperationControllerTest do
                "type" => "insufficient_funds"
              } =
                ctx.conn
-               |> post("/api/operations/transaction", input)
+               |> post("/api/operations/transactions", input)
                |> json_response(:bad_request)
 
       assert %{balance: 0} = Repo.get_by(Account, user_id: source_user.id)
@@ -100,7 +100,7 @@ defmodule BankingApiWeb.OperationControllerTest do
 
       assert %{"status" => status} =
                ctx.conn
-               |> post("/api/operations/transaction", input)
+               |> post("/api/operations/transactions", input)
                |> json_response(:ok)
 
       assert status == "success"

@@ -14,7 +14,7 @@ defmodule BankingApi.Accounts.Schemas.Account do
   @derive {Jason.Encoder, only: [:id, :user_id, :balance]}
 
   @primary_key {:id, Ecto.UUID, autogenerate: true}
-  @foreign_key_type :binary_id
+  @foreign_key_type Ecto.UUID
 
   schema "accounts" do
     field :balance, :integer

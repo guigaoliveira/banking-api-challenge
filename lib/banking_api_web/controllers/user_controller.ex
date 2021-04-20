@@ -12,7 +12,7 @@ defmodule BankingApiWeb.UserController do
   def show(conn, %{"id" => user_id}) do
     with {:uuid, {:ok, _}} <- {:uuid, Ecto.UUID.cast(user_id)},
          {:ok, user} <- Users.get(user_id) do
-      Helpers.send_json(conn, 200, user)
+      Helpers.send_json(conn, :ok, user)
     else
       {:uuid, :error} ->
         Helpers.send_json(conn, :bad_request, %{

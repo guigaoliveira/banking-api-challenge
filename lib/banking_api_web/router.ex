@@ -16,8 +16,8 @@ defmodule BankingApiWeb.Router do
     get "/accounts/:user_id", AccountController, :show
 
     # Operations routers
-    post "/operations/withdrawal", OperationController, :withdrawal
-    post "/operations/transaction", OperationController, :create_transaction
+    post "/operations/withdrawals", OperationController, :withdrawal
+    post "/operations/transactions", OperationController, :create_transaction
   end
 
   # Enables LiveDashboard only for development

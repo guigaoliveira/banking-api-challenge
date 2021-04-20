@@ -32,7 +32,7 @@ defmodule BankingApi.Operations do
 
   defp subtract_balance_account(amount) do
     fn repo, %{get_account_step: account} ->
-      case account |> Account.changeset(%{balance: account.balance - amount}) |> repo.insert() do
+      case account |> Account.changeset(%{balance: account.balance - amount}) |> repo.update() do
         {:ok, account} -> {:ok, account}
         {:error, _} -> {:error, :insufficient_funds}
       end
@@ -51,11 +51,11 @@ defmodule BankingApi.Operations do
       {:ok, %{get_accounts_step: {source_account, target_account, _amount}}} ->
         {:ok, {source_account, target_account}}
 
-      {:error, step, reason, _changes} ->
-        case step do
-          :subtract_from_source_account_step -> {:error, :insufficient_funds}
-          _ -> {:error, reason}
-        end
+      {:error, :subtract_from_source_account_step, _reason, _changes} ->
+        {:error, :insufficient_funds}
+
+      {:error, _step, reason, _changes} ->
+        {:error, reason}
     end
   end
 

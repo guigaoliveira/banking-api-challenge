@@ -11,13 +11,11 @@ defmodule BankingApi.Users.Schemas.User do
   @derive {Jason.Encoder, only: [:id, :name, :email, :inserted_at, :updated_at]}
 
   @primary_key {:id, Ecto.UUID, autogenerate: true}
-  @foreign_key_type :binary_id
+  @foreign_key_type Ecto.UUID
 
   schema "users" do
     field :name, :string
     field :email, :string
-    field :password, :string, virtual: true
-    field :hashed_password, :string
     has_one :account, Account
 
     timestamps()

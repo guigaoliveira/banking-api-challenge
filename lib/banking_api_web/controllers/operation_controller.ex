@@ -13,7 +13,7 @@ defmodule BankingApiWeb.OperationController do
     with {:ok, input} <- InputValidation.cast_and_apply(params, Inputs.Withdrawal),
          {:uuid, {:ok, _}} <- {:uuid, Ecto.UUID.cast(input.account_id)},
          {:ok, account} <- Operations.withdrawal(input) do
-      Helpers.send_json(conn, 200, account)
+      Helpers.send_json(conn, :ok, account)
     else
       {:uuid, :error} ->
         Helpers.send_json(conn, :bad_request, %{
@@ -43,7 +43,7 @@ defmodule BankingApiWeb.OperationController do
   def create_transaction(conn, params) do
     with {:ok, input} <- InputValidation.cast_and_apply(params, Inputs.CreateTransaction),
          {:ok, _} <- Operations.create_transaction(input) do
-      Helpers.send_json(conn, 200, %{status: "success"})
+      Helpers.send_json(conn, :ok, %{status: "success"})
     else
       {:error, :insufficient_funds} ->
         Helpers.send_json(conn, :bad_request, %{
